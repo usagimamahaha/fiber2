@@ -10,14 +10,11 @@ import multiprocessing
 from tqdm import tqdm
 import os
 
-# Define device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f'Using device: {device}')
 
-# Enable cuDNN autotuner
 torch.backends.cudnn.benchmark = True
 
-# Standardization function
 def standardize_data(data):
     mean = np.mean(data)
     std = np.std(data)
@@ -88,7 +85,6 @@ class BranchNet(nn.Module):
         self.dropout = nn.Dropout(0.3)
 
     def forward(self, x):
-        # x is expected to be of shape [batch, 2, 1024]
         x = self.relu(self.bn1(self.conv1(x)))
         x = self.res_blocks(x)
         x = self.global_avg_pool(x).squeeze(2)
@@ -140,7 +136,6 @@ class DeepONet(nn.Module):
         self.branch_net = BranchNet(branch_input_size, hidden_size)
         self.trunk_net = TrunkNet(trunk_input_size, hidden_size)
         
-        # Multi-layer FNN after multiplication
         self.mlp = nn.Sequential(
             nn.Linear(hidden_size, hidden_size * 2),
             nn.ReLU(),
@@ -204,7 +199,7 @@ def main():
     train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
 
     batch_size = 256
-    num_workers = min(os.cpu_count(), 8)  # Limit to 8 workers max
+    num_workers = min(os.cpu_count(), 8) 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, persistent_workers=True)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True, persistent_workers=True)
 
@@ -230,11 +225,11 @@ def main():
         train_loss = train(model, train_loader, optimizer, criterion, device, scheduler)
         train_losses.append(train_loss)
         
-        if epoch % 5 == 0:  # Validate every 5 epochs
+        if epoch % 5 == 0:  
             val_loss = validate(model, test_loader, criterion, device)
             val_losses.append(val_loss)
             
-            scheduler.step(val_loss)  # Update the learning rate based on validation loss
+            scheduler.step(val_loss)  
             
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
